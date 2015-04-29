@@ -68,6 +68,7 @@ class Configure
     @llvm_shared_objs       = nil
     @llvm_cxxflags          = ""
     @llvm_ldflags           = ""
+    @llvm_mcjit             = false
 
     # System settings
     @libc         = nil
@@ -349,6 +350,10 @@ class Configure
       @llvm_shared = true
     end
 
+    o.on "--llvm-mcjit", "Use LLVM with MCJIT" do
+      @llvm_mcjit = true
+    end
+
     o.doc "\n System settings"
 
     o.on "--with-include-dir", "DIR", "Add DIR to the default include search paths" do |dir|
@@ -610,6 +615,11 @@ class Configure
 
           if @llvm_shared
             setup_llvm_shared
+          end
+
+          # Old JIT API is no longer available as of LLVM 3.6
+          if @llvm_api_version >= 306
+            @llvm_mcjit = true
           end
 
           return true
@@ -1585,7 +1595,7 @@ int main() { return tgetnum(""); }
 #define RBX_LDSHAREDXX       "#{@ldsharedxx}"
 #define RBX_SIZEOF_LONG      #{sizeof("long")}
 #define RBX_LLVM_API_VER     #{@llvm_api_version}
-#define RBX_LLVM_USE_MCJIT   #{@llvm_api_version >= 306}
+#define RBX_LLVM_USE_MCJIT   #{@llvm_mcjit}
 #define RBX_LIBC             "#{@libc}"
 #define RBX_HAVE_LCHMOD      #{@have_lchmod}
 #define RBX_HAVE_LCHOWN      #{@have_lchown}
